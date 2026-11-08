@@ -90,17 +90,50 @@ function StudyPage() {
     setMessage('');
     setResult(null);
     try {
-      const { data, error } = await supabase.functions.invoke('study-ai', { body: { question: question.trim() } });
+      const { data: current, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !current.session || current.session.user.id !== userId) {
+        throw new Error('Sua sessão não está mais ativa. Entre novamente para analisar.');
+      }
+      let accessToken = current.session.access_token;
+      if ((current.session.expires_at ?? 0) * 1000 <= Date.now() + 60000) {
+        const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshed.session || refreshed.session.user.id !== userId) {
+          throw new Error('Não foi possível renovar sua sessão. Entre novamente para analisar.');
+        }
+        accessToken = refreshed.session.access_token;
+      }
+      if (account.current !== userId) return;
+      const { data, error } = await supabase.functions.invoke('study-ai', {
+        body: { question: question.trim() },
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (error) {
-        let detail = 'Não foi possível concluir a análise. Verifique a conexão e a publicação do serviço study-ai.';
+        let detail = 'Não foi possível conectar ao serviço de análise. Verifique sua conexão e tente novamente.';
         if (error.context instanceof Response) {
-          const body = await error.context.json().catch(() => null);
-          if (typeof body?.error === 'string') detail = body.error;
+          const response = error.context;
+          const body = await response.json().catch(() => null);
+          if (typeof body?.error === 'string' && body.error.trim()) {
+            detail = body.error;
+          } else if (response.status === 401) {
+            detail = 'Sua sessão não foi aceita pelo serviço. Entre novamente para analisar.';
+          } else if (response.status === 403) {
+            detail = 'O serviço não autorizou esta análise para sua conta.';
+          } else if (response.status === 429) {
+            detail = 'O serviço informou um limite de uso. Aguarde antes de tentar novamente.';
+          } else if (response.status === 504) {
+            detail = 'A análise excedeu o tempo de espera. Aguarde antes de tentar novamente.';
+          } else {
+            detail = `O serviço de análise retornou uma falha (HTTP ${response.status}). Tente novamente mais tarde.`;
+          }
+          if (typeof body?.request_id === 'string' && /^[0-9a-f-]{36}$/i.test(body.request_id)) {
+            detail += ` Referência: ${body.request_id}.`;
+          }
         }
         throw new Error(detail);
       }
-      if (!data || typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('O serviço retornou uma resposta vazia.');
-      if (account.current === userId) setResult({ answer: data.answer, saved: data.saved === true, warning: data.warning });
+      if (typeof data?.error === 'string') throw new Error(data.error);
+      if (!data || typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('O serviço retornou uma resposta vazia. Tente novamente mais tarde.');
+      if (account.current === userId) setResult({ answer: data.answer, saved: data.saved === true, warning: typeof data.warning === 'string' ? data.warning : undefined });
     } catch (error) {
       if (account.current === userId) setMessage(error instanceof Error ? error.message : 'Falha na análise. Tente novamente.');
     } finally { pending.current = false; setBusy(false); }

@@ -23,28 +23,39 @@ Deno.serve(async (request: Request) => {
 
   let eventId: string | null = null;
   let userId: string | null = null;
+  let stage = 'AUTH';
   const requestId = crypto.randomUUID();
 
-  async function finish(errorCode?: string) {
-    if (!eventId) return;
-    const { error } = await db.from('usage_events').update({
-      finished_at: new Date().toISOString(),
-      ...(errorCode ? { error_code: errorCode, status: 'error' } : {}),
-    }).eq('id', eventId).eq('user_id', userId);
-    if (error) console.error('study-ai: falha ao finalizar evento', requestId, error.code);
+  async function log(code: string) {
+    console.error('study-ai', requestId, stage, code);
+    try {
+      const { error } = await db.from('error_logs').insert({
+        user_id: userId, context: 'study-ai', message: `${code}; etapa: ${stage}`, code, request_id: requestId,
+      });
+      if (error) console.error('study-ai: falha no registro de erro', requestId, error.code);
+    } catch {
+      console.error('study-ai: registro de erro indisponível', requestId);
+    }
   }
 
-  async function log(code: string) {
-    const { error } = await db.from('error_logs').insert({
-      user_id: userId, context: 'study-ai', message: code, code, request_id: requestId,
-    });
-    if (error) console.error('study-ai: falha no registro de erro', requestId, error.code);
+  async function finish(errorCode?: string) {
+    if (!eventId || !userId) return;
+    try {
+      const { error } = await db.from('usage_events').update({
+        finished_at: new Date().toISOString(),
+        ...(errorCode ? { error_code: errorCode, status: 'error' } : {}),
+      }).eq('id', eventId).eq('user_id', userId);
+      if (error) await log('USAGE_FINISH_FAILED');
+    } catch {
+      await log('USAGE_FINISH_FAILED');
+    }
   }
 
   try {
     const { data: auth, error: authError } = await db.auth.getUser(token);
     if (authError || !auth.user) return reply(401, { error: 'Sua sessão expirou. Entre novamente.' });
     userId = auth.user.id;
+    stage = 'REQUEST';
 
     if (Number(request.headers.get('content-length') || 0) > 100000) return reply(413, { error: 'O texto enviado é muito grande.' });
     const raw = await request.text();
@@ -54,24 +65,28 @@ Deno.serve(async (request: Request) => {
     const question = body && typeof body === 'object' && 'question' in body && typeof body.question === 'string' ? body.question.trim() : '';
     if (!question || question.length > 12000) return reply(400, { error: 'Envie uma pergunta com até 12.000 caracteres.' });
 
-    const apiKey = Deno.env.get('AI_API_KEY');
-    const model = Deno.env.get('AI_MODEL');
-    const base = Deno.env.get('AI_BASE_URL');
+    const apiKey = Deno.env.get('AI_API_KEY')?.trim();
+    const model = Deno.env.get('AI_MODEL')?.trim();
+    const base = Deno.env.get('AI_BASE_URL')?.trim();
     if (!apiKey || !model || !base) return reply(503, { error: 'A integração de IA está incompleta: faltam as configurações do provedor ou do modelo. Nenhum uso foi reservado.' });
     let endpoint: URL;
     try {
-      endpoint = new URL(`${base.replace(/\/+$/, '')}/chat/completions`);
-      if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password) throw new Error('Invalid URL');
+      endpoint = new URL(base);
+      if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.hash) throw new Error('Invalid URL');
+      const path = endpoint.pathname.replace(/\/+$/, '');
+      endpoint.pathname = path.endsWith('/chat/completions') ? path : `${path}/chat/completions`;
     } catch {
       return reply(503, { error: 'O endereço do provedor de IA está inválido. Nenhum uso foi reservado.' });
     }
 
+    stage = 'PROFILE';
     const { data: profile, error: profileError } = await db.from('profiles').select('school_level, explanation_style').eq('id', userId).maybeSingle();
     if (profileError) {
       await log('PROFILE_READ_FAILED');
       return reply(503, { error: 'Não foi possível consultar suas preferências. Tente novamente.' });
     }
 
+    stage = 'LIMIT';
     const { data: reservation, error: reservationError } = await db.rpc('reserve_study_request', { p_user_id: userId, p_request_id: requestId });
     if (reservationError) {
       await log('LIMIT_CHECK_FAILED');
@@ -82,8 +97,13 @@ Deno.serve(async (request: Request) => {
       if (reservation?.reason === 'limit') return reply(429, { error: 'Você atingiu seu limite diário de uso.' });
       return reply(503, { error: 'O limite diário não está disponível nas configurações da aplicação.' });
     }
+    if (typeof reservation.event_id !== 'string' || !reservation.event_id) {
+      await log('INVALID_RESERVATION');
+      return reply(503, { error: 'Não foi possível confirmar a reserva de uso. A análise não foi enviada ao provedor.', code: 'INVALID_RESERVATION', request_id: requestId });
+    }
     eventId = reservation.event_id;
 
+    stage = 'PROVIDER_CONNECTION';
     const response = await fetch(endpoint, {
       method: 'POST',
       redirect: 'error',
@@ -99,44 +119,92 @@ Deno.serve(async (request: Request) => {
       }),
     });
 
+    stage = 'PROVIDER_RESPONSE';
     if (!response.ok) {
-      await response.body?.cancel();
+      try { await response.body?.cancel(); } catch { /* Preserva o erro HTTP original. */ }
       const code = `PROVIDER_HTTP_${response.status}`;
       await finish(code);
       await log(code);
-      return reply(502, { error: response.status === 429 ? 'O provedor de IA está temporariamente limitado. Aguarde antes de tentar novamente.' : 'O provedor de IA recusou a solicitação. A integração precisa ser verificada.', request_id: requestId });
+      const detail = response.status === 429
+        ? 'O provedor de IA informou limite de capacidade ou de cota. Isso não é o limite diário da sua conta. Aguarde antes de tentar novamente; se persistir, a integração precisa ser verificada.'
+        : response.status === 401 || response.status === 403
+          ? 'O provedor de IA não autorizou a integração. As credenciais e as permissões do modelo precisam ser verificadas.'
+          : response.status === 404
+            ? 'O endereço ou modelo configurado não foi encontrado pelo provedor de IA.'
+            : response.status === 400 || response.status === 422
+              ? 'O provedor de IA rejeitou o formato da solicitação. Verifique a compatibilidade do modelo com Chat Completions.'
+              : response.status >= 500
+                ? 'O provedor de IA está indisponível neste momento. Tente novamente mais tarde.'
+                : 'O provedor de IA recusou a solicitação. A integração precisa ser verificada.';
+      return reply(502, { error: detail, code, request_id: requestId });
     }
 
     const output = await response.json();
     const choice = output?.choices?.[0];
-    const answer = choice?.message?.content;
-    if (typeof answer !== 'string' || !answer.trim() || choice?.finish_reason === 'length') {
-      await finish('INVALID_OR_INCOMPLETE_ANSWER');
-      await log('INVALID_OR_INCOMPLETE_ANSWER');
-      return reply(502, { error: 'A IA retornou uma resposta vazia ou incompleta. Tente uma pergunta mais específica.', request_id: requestId });
+    const content = choice?.message?.content;
+    const answer = typeof content === 'string' ? content.trim() : Array.isArray(content)
+      ? content.map((part: unknown) => {
+          if (part && typeof part === 'object' && 'type' in part && part.type === 'text' && 'text' in part && typeof part.text === 'string') return part.text;
+          return '';
+        }).filter(Boolean).join('\n').trim()
+      : '';
+    const refused = choice?.finish_reason === 'content_filter' || Boolean(choice?.message?.refusal);
+    if (refused || !answer || choice?.finish_reason === 'length') {
+      const code = refused ? 'PROVIDER_REFUSAL' : choice?.finish_reason === 'length' ? 'INCOMPLETE_ANSWER' : 'EMPTY_ANSWER';
+      await finish(code);
+      await log(code);
+      const detail = refused
+        ? 'A IA não pôde responder a esse conteúdo. Reformule a pergunta com foco no exercício de estudo.'
+        : choice?.finish_reason === 'length'
+          ? 'A resposta foi interrompida pelo limite de saída do modelo. Divida a questão em partes menores.'
+          : 'O provedor retornou uma resposta sem texto utilizável. Tente novamente; se persistir, verifique a compatibilidade do modelo.';
+      return reply(502, { error: detail, code, request_id: requestId });
     }
 
-    const { error: saveError } = await db.from('analyses').insert({
-      user_id: userId,
-      source_type: 'texto',
-      statement: question,
-      answer: answer.trim(),
-      explanation: answer.trim(),
-      school_level: profile?.school_level ?? null,
-    });
+    stage = 'PERSISTENCE';
+    let saved = false;
+    try {
+      const { error: saveError } = await db.from('analyses').insert({
+        user_id: userId,
+        source_type: 'texto',
+        statement: question,
+        answer,
+        explanation: answer,
+        school_level: profile?.school_level ?? null,
+      });
+      saved = !saveError;
+    } catch {
+      saved = false;
+    }
+    if (!saved) await log('ANALYSIS_SAVE_FAILED');
     await finish();
-    if (saveError) await log('ANALYSIS_SAVE_FAILED');
     return reply(200, {
-      answer: answer.trim(),
-      saved: !saveError,
-      ...(saveError ? { warning: 'A resposta foi recebida, mas houve uma falha ao salvar no banco. Copie o conteúdo para preservá-lo.' } : {}),
+      answer,
+      saved,
+      ...(!saved ? { warning: 'A resposta foi recebida, mas não foi possível confirmar o salvamento no banco. Copie o conteúdo para preservá-lo. Não é necessário repetir a análise.' } : {}),
       request_id: requestId,
     });
   } catch (error) {
     const timedOut = error instanceof Error && ['TimeoutError', 'AbortError'].includes(error.name);
-    const code = timedOut ? 'PROVIDER_TIMEOUT' : 'ANALYSIS_FAILED';
-    console.error('study-ai', requestId, code);
-    try { await finish(code); await log(code); } catch { console.error('study-ai: falha ao registrar diagnóstico', requestId); }
-    return reply(timedOut ? 504 : 502, { error: timedOut ? 'A IA demorou além do esperado. Aguarde antes de tentar novamente.' : 'Não foi possível concluir a análise. Tente novamente mais tarde.', request_id: requestId });
+    const providerStage = stage.startsWith('PROVIDER_');
+    const invalidJson = stage === 'PROVIDER_RESPONSE' && error instanceof SyntaxError;
+    const code = timedOut ? (providerStage ? 'PROVIDER_TIMEOUT' : 'SERVICE_TIMEOUT')
+      : invalidJson ? 'PROVIDER_INVALID_JSON' : `${stage}_FAILED`;
+    const detail = timedOut
+      ? 'O serviço demorou além do esperado. Aguarde antes de tentar novamente.'
+      : invalidJson
+        ? 'O provedor retornou um conteúdo inválido em vez da resposta da IA. Verifique o endereço e a compatibilidade da API com Chat Completions.'
+        : providerStage
+          ? 'A comunicação com o provedor de IA falhou antes de receber uma resposta completa. Tente novamente mais tarde.'
+          : stage === 'AUTH'
+            ? 'Não foi possível validar sua sessão neste momento. Tente novamente.'
+            : stage === 'PROFILE'
+              ? 'Não foi possível consultar suas preferências de estudo. Tente novamente.'
+              : stage === 'LIMIT'
+                ? 'Não foi possível confirmar o limite de uso. Aguarde antes de tentar novamente.'
+                : 'Não foi possível ler a solicitação de análise. Verifique a conexão e tente novamente.';
+    await log(code);
+    await finish(code);
+    return reply(timedOut ? 504 : providerStage ? 502 : 503, { error: detail, code, request_id: requestId });
   }
 });
