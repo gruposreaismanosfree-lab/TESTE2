@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js';
 import { Route as rootRoute } from './__root';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import { ExitShortcutSettings } from '@/components/ExitShortcut';
 
 export const Route = createRoute({ getParentRoute: () => rootRoute, path: '/', component: StudyPage });
 
@@ -175,6 +176,7 @@ function StudyPage() {
       )}
       {message && <div role="alert" className="mt-6 break-words rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-sm leading-relaxed text-amber-100">{message}</div>}
       {result && <section aria-live="polite" className="mt-8 rounded-2xl border border-border bg-card p-5 sm:p-7"><h2 className="mb-5 text-xl font-semibold text-primary">Explicação</h2><div className="whitespace-pre-wrap break-words leading-relaxed">{result.answer}</div><p className="mt-6 border-t border-border pt-4 text-sm text-muted">{result.saved ? 'Análise salva na sua conta.' : result.warning || 'Resposta recebida, mas não foi possível salvar a análise.'}</p></section>}
+      {session && <ExitShortcutSettings />}
       <footer className="mt-auto pt-12 text-center text-xs leading-relaxed text-muted">A IA pode cometer erros. Revise as respostas antes de utilizá-las.</footer>
     </main>
   );
