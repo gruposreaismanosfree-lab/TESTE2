@@ -116,7 +116,7 @@ function StudyPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-8 sm:px-8 sm:py-12">
       <header className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
         <a href="/" className="text-xl font-extrabold tracking-tight">WS STUDY <span className="text-primary">AI</span></a>
-        {session && <Button className="border border-border bg-card text-foreground" disabled={busy} onClick={() => void logout()}>Sair</Button>}
+        {session && <div className="flex flex-wrap items-center gap-3"><a href="/admin" className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-primary underline-offset-4 hover:underline">Administração</a><Button className="border border-border bg-card text-foreground" disabled={busy} onClick={() => void logout()}>Sair</Button></div>}
       </header>
       <section className="mb-8">
         <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary">Seu espaço de estudo</p>
