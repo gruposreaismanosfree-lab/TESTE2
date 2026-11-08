@@ -1,89 +1,236 @@
 {
   "communities": {
     "0": [
+      "package_dependencies",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_supabase_supabase_js",
+      "package_dependencies_tanstack_react_router",
+      "ref_react",
+      "ref_react_dom",
+      "ref_supabase_supabase_js",
+      "ref_tanstack_react_router",
+      "src_lib_supabase",
+      "src_lib_supabase_makeclient",
+      "src_lib_supabase_supabase",
+      "src_main",
+      "src_router",
+      "src_router_register",
+      "src_router_router",
+      "src_router_tanstack_react_router",
+      "src_routes_admin_route",
+      "src_routes_index",
+      "src_routes_index_result",
+      "src_routes_index_route",
+      "src_routes_root",
+      "src_routes_root_route",
+      "src_styles"
+    ],
+    "1": [
+      "package",
+      "package_devdependencies",
+      "package_devdependencies_autoprefixer",
+      "package_devdependencies_postcss",
+      "package_devdependencies_tailwindcss",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_devdependencies_vite",
+      "package_devdependencies_vitejs_plugin_react",
+      "package_name",
+      "package_private",
+      "package_type",
+      "package_version",
+      "ref_autoprefixer",
+      "ref_postcss",
+      "ref_tailwindcss",
+      "ref_types_react",
+      "ref_types_react_dom",
+      "ref_typescript",
+      "ref_vite",
+      "ref_vitejs_plugin_react",
+      "vite_config"
+    ],
+    "2": [
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_baseurl",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_paths",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_compileroptions_types",
+      "tsconfig_include"
+    ],
+    "3": [
       "github_workflows_cortex",
+      "github_workflows_cortex_build_cortex_runs_on",
+      "github_workflows_cortex_build_cortex_steps",
+      "github_workflows_cortex_concurrency",
+      "github_workflows_cortex_concurrency_cancel_in_progress",
+      "github_workflows_cortex_concurrency_group",
+      "github_workflows_cortex_jobs",
+      "github_workflows_cortex_jobs_build_cortex",
       "github_workflows_cortex_name",
       "github_workflows_cortex_on",
       "github_workflows_cortex_on_workflow_dispatch",
       "github_workflows_cortex_permissions",
-      "github_workflows_cortex_permissions_contents"
-    ],
-    "1": [
-      "github_workflows_cortex_build_cortex_steps",
+      "github_workflows_cortex_permissions_contents",
       "github_workflows_cortex_steps_name",
       "github_workflows_cortex_steps_run",
       "github_workflows_cortex_steps_uses"
     ],
-    "2": [
-      "github_workflows_cortex_build_cortex_runs_on",
-      "github_workflows_cortex_jobs",
-      "github_workflows_cortex_jobs_build_cortex"
+    "4": [
+      "src_components_ui_button",
+      "src_components_ui_button_button",
+      "src_routes_admin",
+      "src_routes_admin_account",
+      "src_routes_admin_adminpage",
+      "src_routes_admin_adminpage_logout",
+      "src_routes_admin_adminpanel",
+      "src_routes_admin_adminpanel_save",
+      "src_routes_admin_adminpanel_savedefault",
+      "src_routes_admin_adminpanel_saveuser",
+      "src_routes_admin_auditentry",
+      "src_routes_admin_dashboard",
+      "src_routes_admin_datelabel",
+      "src_routes_admin_errorentry",
+      "src_routes_admin_readlimit"
     ],
-    "3": [
-      "github_workflows_cortex_concurrency",
-      "github_workflows_cortex_concurrency_cancel_in_progress",
-      "github_workflows_cortex_concurrency_group"
+    "5": [
+      "ref_npm_supabase",
+      "supabase_functions_study_ai_index",
+      "supabase_functions_study_ai_index_cors",
+      "supabase_functions_study_ai_index_finish",
+      "supabase_functions_study_ai_index_log",
+      "supabase_functions_study_ai_index_reply"
+    ],
+    "6": [
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_preview"
+    ],
+    "7": [
+      "src_routes_index_studypage",
+      "src_routes_index_studypage_analyze",
+      "src_routes_index_studypage_authenticate",
+      "src_routes_index_studypage_logout"
+    ],
+    "8": [
+      "postcss_config"
+    ],
+    "9": [
+      "tailwind_config"
     ]
   },
   "cohesion": {
-    "0": 0.3333333333333333,
-    "1": 0.5,
-    "2": 0.6666666666666666,
-    "3": 0.6666666666666666
+    "0": 0.13405797101449277,
+    "1": 0.1225296442687747,
+    "2": 0.11764705882352941,
+    "3": 0.125,
+    "4": 0.21904761904761905,
+    "5": 0.4,
+    "6": 0.5,
+    "7": 0.5,
+    "8": 1.0,
+    "9": 1.0
   },
   "gods": [
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "ref_tanstack_react_router",
+      "label": "@tanstack/react-router",
+      "degree": 7
+    },
+    {
+      "id": "src_routes_admin_adminpanel",
+      "label": "AdminPanel()",
+      "degree": 7
+    },
+    {
+      "id": "ref_react",
+      "label": "react",
+      "degree": 6
+    },
+    {
+      "id": "src_components_ui_button_button",
+      "label": "Button()",
+      "degree": 6
+    },
+    {
+      "id": "ref_supabase_supabase_js",
+      "label": "@supabase/supabase-js",
+      "degree": 5
+    },
+    {
+      "id": "src_routes_index_studypage",
+      "label": "StudyPage()",
+      "degree": 5
+    },
     {
       "id": "github_workflows_cortex_build_cortex_steps",
       "label": "steps",
       "degree": 4
     },
     {
-      "id": "github_workflows_cortex_concurrency",
-      "label": "concurrency",
-      "degree": 3
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 4
     },
     {
-      "id": "github_workflows_cortex_jobs_build_cortex",
-      "label": "build-cortex",
-      "degree": 3
-    },
-    {
-      "id": "github_workflows_cortex_on",
-      "label": "on",
-      "degree": 2
-    },
-    {
-      "id": "github_workflows_cortex_permissions",
-      "label": "permissions",
-      "degree": 2
-    },
-    {
-      "id": "github_workflows_cortex_jobs",
-      "label": "jobs",
-      "degree": 2
-    },
-    {
-      "id": "github_workflows_cortex_name",
-      "label": "name",
-      "degree": 1
-    },
-    {
-      "id": "github_workflows_cortex_on_workflow_dispatch",
-      "label": "workflow_dispatch",
-      "degree": 1
-    },
-    {
-      "id": "github_workflows_cortex_permissions_contents",
-      "label": "contents",
-      "degree": 1
-    },
-    {
-      "id": "github_workflows_cortex_concurrency_group",
-      "label": "group",
-      "degree": 1
+      "id": "src_routes_root_route",
+      "label": "Route",
+      "degree": 4
     }
   ],
-  "surprises": [],
+  "surprises": [
+    {
+      "source": "StudyPage()",
+      "target": "Button()",
+      "source_files": [
+        "src/routes/index.tsx",
+        "src/components/ui/button.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "AdminPage()",
+      "target": "Button()",
+      "source_files": [
+        "src/routes/admin.tsx",
+        "src/components/ui/button.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "AdminPanel()",
+      "target": "Button()",
+      "source_files": [
+        "src/routes/admin.tsx",
+        "src/components/ui/button.tsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    }
+  ],
   "tokens": {
     "input": 0,
     "output": 0

@@ -1,8 +1,86 @@
 {
   ".github/workflows/cortex.yml": {
-    "mtime": 1794148280.2865658,
-    "seen": 1794148283.7128665,
+    "mtime": 1794149026.5042663,
+    "seen": 1794149030.7806973,
     "ast_hash": "23a28de13f104f9470cfc7ac061567e3",
     "semantic_hash": "23a28de13f104f9470cfc7ac061567e3"
+  },
+  "package.json": {
+    "mtime": 1794149026.5046754,
+    "seen": 1794149030.7807028,
+    "ast_hash": "fa3b854413d2bc4d7926ce07fee0255c",
+    "semantic_hash": "fa3b854413d2bc4d7926ce07fee0255c"
+  },
+  "postcss.config.js": {
+    "mtime": 1794149026.5046754,
+    "seen": 1794149030.7807052,
+    "ast_hash": "222a79a9879c7cd4d9980533b7639465",
+    "semantic_hash": "222a79a9879c7cd4d9980533b7639465"
+  },
+  "src/components/ui/button.tsx": {
+    "mtime": 1794149026.5049388,
+    "seen": 1794149030.780707,
+    "ast_hash": "871e5d574bebfb9f98918726a78f77d8",
+    "semantic_hash": "871e5d574bebfb9f98918726a78f77d8"
+  },
+  "src/lib/supabase.ts": {
+    "mtime": 1794149026.5049388,
+    "seen": 1794149030.7807083,
+    "ast_hash": "a6f946cec548cdedbc42b70d65f925ac",
+    "semantic_hash": "a6f946cec548cdedbc42b70d65f925ac"
+  },
+  "src/main.tsx": {
+    "mtime": 1794149026.5049388,
+    "seen": 1794149030.7807093,
+    "ast_hash": "6296de37822245751e72d1c940ddb9d7",
+    "semantic_hash": "6296de37822245751e72d1c940ddb9d7"
+  },
+  "src/router.tsx": {
+    "mtime": 1794149026.5049388,
+    "seen": 1794149030.780711,
+    "ast_hash": "80aa9e1304a7e3a47d569ba2e919d256",
+    "semantic_hash": "80aa9e1304a7e3a47d569ba2e919d256"
+  },
+  "src/routes/__root.tsx": {
+    "mtime": 1794149026.5049388,
+    "seen": 1794149030.780712,
+    "ast_hash": "755d8c121664f6ee8e748bcea20ba911",
+    "semantic_hash": "755d8c121664f6ee8e748bcea20ba911"
+  },
+  "src/routes/admin.tsx": {
+    "mtime": 1794149026.505131,
+    "seen": 1794149030.7807128,
+    "ast_hash": "229e8926e6008735f434cd2cb1312924",
+    "semantic_hash": "229e8926e6008735f434cd2cb1312924"
+  },
+  "src/routes/index.tsx": {
+    "mtime": 1794149026.505131,
+    "seen": 1794149030.780714,
+    "ast_hash": "622ab6fe08ede9af39a3ecfa2ea1e82d",
+    "semantic_hash": "622ab6fe08ede9af39a3ecfa2ea1e82d"
+  },
+  "supabase/functions/study-ai/index.ts": {
+    "mtime": 1794149026.505347,
+    "seen": 1794149030.780715,
+    "ast_hash": "53a99ae5a1f199415e5e395d2f7fe105",
+    "semantic_hash": "53a99ae5a1f199415e5e395d2f7fe105"
+  },
+  "tailwind.config.js": {
+    "mtime": 1794149026.5055277,
+    "seen": 1794149030.7807162,
+    "ast_hash": "ae18b130228105c2a2e9de0eae211231",
+    "semantic_hash": "ae18b130228105c2a2e9de0eae211231"
+  },
+  "tsconfig.json": {
+    "mtime": 1794149026.5055277,
+    "seen": 1794149030.7807174,
+    "ast_hash": "ce833be8fbe4ca4207f2ebace09be77e",
+    "semantic_hash": "ce833be8fbe4ca4207f2ebace09be77e"
+  },
+  "vite.config.ts": {
+    "mtime": 1794149026.5055277,
+    "seen": 1794149030.7807183,
+    "ast_hash": "d225d323e0686ddda5022d536958789a",
+    "semantic_hash": "d225d323e0686ddda5022d536958789a"
   }
 }
