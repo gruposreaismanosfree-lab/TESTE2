@@ -1,0 +1,91 @@
+{
+  "communities": {
+    "0": [
+      "github_workflows_cortex",
+      "github_workflows_cortex_name",
+      "github_workflows_cortex_on",
+      "github_workflows_cortex_on_workflow_dispatch",
+      "github_workflows_cortex_permissions",
+      "github_workflows_cortex_permissions_contents"
+    ],
+    "1": [
+      "github_workflows_cortex_build_cortex_steps",
+      "github_workflows_cortex_steps_name",
+      "github_workflows_cortex_steps_run",
+      "github_workflows_cortex_steps_uses"
+    ],
+    "2": [
+      "github_workflows_cortex_build_cortex_runs_on",
+      "github_workflows_cortex_jobs",
+      "github_workflows_cortex_jobs_build_cortex"
+    ],
+    "3": [
+      "github_workflows_cortex_concurrency",
+      "github_workflows_cortex_concurrency_cancel_in_progress",
+      "github_workflows_cortex_concurrency_group"
+    ]
+  },
+  "cohesion": {
+    "0": 0.3333333333333333,
+    "1": 0.5,
+    "2": 0.6666666666666666,
+    "3": 0.6666666666666666
+  },
+  "gods": [
+    {
+      "id": "github_workflows_cortex_build_cortex_steps",
+      "label": "steps",
+      "degree": 4
+    },
+    {
+      "id": "github_workflows_cortex_concurrency",
+      "label": "concurrency",
+      "degree": 3
+    },
+    {
+      "id": "github_workflows_cortex_jobs_build_cortex",
+      "label": "build-cortex",
+      "degree": 3
+    },
+    {
+      "id": "github_workflows_cortex_on",
+      "label": "on",
+      "degree": 2
+    },
+    {
+      "id": "github_workflows_cortex_permissions",
+      "label": "permissions",
+      "degree": 2
+    },
+    {
+      "id": "github_workflows_cortex_jobs",
+      "label": "jobs",
+      "degree": 2
+    },
+    {
+      "id": "github_workflows_cortex_name",
+      "label": "name",
+      "degree": 1
+    },
+    {
+      "id": "github_workflows_cortex_on_workflow_dispatch",
+      "label": "workflow_dispatch",
+      "degree": 1
+    },
+    {
+      "id": "github_workflows_cortex_permissions_contents",
+      "label": "contents",
+      "degree": 1
+    },
+    {
+      "id": "github_workflows_cortex_concurrency_group",
+      "label": "group",
+      "degree": 1
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
