@@ -3,7 +3,34 @@
 @tailwind utilities;
 
 @layer base {
+  :root { color-scheme: dark; }
   body { @apply m-0 min-w-[320px] bg-background font-sans text-foreground antialiased; }
-  button, input, textarea { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background; }
+  button, input, textarea, select, a, summary { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background; }
+  button, a { -webkit-tap-highlight-color: transparent; }
   ::selection { @apply bg-primary text-background; }
+}
+
+@layer components {
+  .ws-grid {
+    background-image: linear-gradient(rgb(245 112 209 / 0.035) 1px, transparent 1px), linear-gradient(90deg, rgb(245 112 209 / 0.035) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .ws-panel { @apply rounded-2xl border border-border bg-card p-5 sm:p-7; }
+  .ws-field { @apply w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted; }
+  .ws-enter { animation: ws-enter 350ms ease-out both; }
+}
+
+@keyframes ws-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+html[data-ws-reduce-motion='true'] *, html[data-ws-reduce-motion='true'] *::before, html[data-ws-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }

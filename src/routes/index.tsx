@@ -5,6 +5,9 @@ import { Route as rootRoute } from './__root';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { ExitShortcutSettings } from '@/components/ExitShortcut';
+import { PlatformLayout } from '@/components/PlatformLayout';
+import { useStudyPreferences } from '@/components/StudyPreferences';
+import { researchDraftKey } from '@/lib/research';
 
 export const Route = createRoute({ getParentRoute: () => rootRoute, path: '/', component: StudyPage });
 
@@ -12,6 +15,7 @@ type Result = { answer: string; saved: boolean; warning?: string };
 const fieldClass = 'w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground placeholder:text-muted';
 
 function StudyPage() {
+  const { preferences } = useStudyPreferences();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [signup, setSignup] = useState(false);
@@ -48,17 +52,12 @@ function StudyPage() {
     account.current = session?.user.id ?? null;
     setResult(null);
     setQuestion('');
-    if (!session || !supabase) return;
-    let active = true;
-    const user = session.user;
-    void supabase.from('profiles').upsert({
-      id: user.id,
-      email: user.email ?? null,
-      display_name: typeof user.user_metadata.display_name === 'string' ? user.user_metadata.display_name : null,
-    }, { onConflict: 'id', ignoreDuplicates: true }).then(({ error }) => {
-      if (active && error) setMessage('Sua sessão está ativa, mas não foi possível registrar o perfil. Verifique as permissões da tabela profiles.');
-    });
-    return () => { active = false; };
+    try {
+      const draft = sessionStorage.getItem(researchDraftKey);
+      if (draft && draft.length <= 12000) setQuestion(draft);
+    } catch {
+      setMessage('Não foi possível recuperar o rascunho de pesquisa desta aba. Você pode colar a pergunta no assistente.');
+    }
   }, [session?.user.id]);
 
   async function authenticate(event: FormEvent) {
@@ -71,7 +70,7 @@ function StudyPage() {
       if (signup) {
         const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { display_name: name.trim() } } });
         if (error) throw error;
-        if (!data.session) setMessage('Confira seu e-mail para confirmar o cadastro. O perfil será registrado após a confirmação e o login.');
+        if (!data.session) setMessage('Confira seu e-mail para confirmar o cadastro e depois entre na sua conta.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
@@ -134,7 +133,10 @@ function StudyPage() {
       }
       if (typeof data?.error === 'string') throw new Error(data.error);
       if (!data || typeof data.answer !== 'string' || !data.answer.trim()) throw new Error('O serviço retornou uma resposta vazia. Tente novamente mais tarde.');
-      if (account.current === userId) setResult({ answer: data.answer, saved: data.saved === true, warning: typeof data.warning === 'string' ? data.warning : undefined });
+      if (account.current === userId) {
+        setResult({ answer: data.answer, saved: data.saved === true, warning: typeof data.warning === 'string' ? data.warning : undefined });
+        try { sessionStorage.removeItem(researchDraftKey); } catch { /* A resposta continua disponível mesmo sem acesso ao armazenamento local. */ }
+      }
     } catch (error) {
       if (account.current === userId) setMessage(error instanceof Error ? error.message : 'Falha na análise. Tente novamente.');
     } finally { pending.current = false; setBusy(false); }
@@ -147,17 +149,37 @@ function StudyPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 py-8 sm:px-8 sm:py-12">
-      <header className="mb-10 flex flex-wrap items-center justify-between gap-4 border-b border-border pb-6">
-        <a href="/" className="text-xl font-extrabold tracking-tight">WS STUDY <span className="text-primary">AI</span></a>
-        {session && <div className="flex flex-wrap items-center gap-3"><a href="/admin" className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-primary underline-offset-4 hover:underline">Administração</a><Button className="border border-border bg-card text-foreground" disabled={busy} onClick={() => void logout()}>Sair</Button></div>}
-      </header>
-      <section className="mb-8">
-        <p className="mb-3 text-sm font-medium uppercase tracking-widest text-primary">Seu espaço de estudo</p>
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Entenda a questão, passo a passo.</h1>
-        <p className="mt-4 max-w-2xl leading-relaxed text-muted">Escreva uma dúvida ou cole o enunciado completo, incluindo as alternativas. Confira sempre o raciocínio apresentado.</p>
+    <PlatformLayout active="home">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted">{preferences.name ? `Olá, ${preferences.name}. Vamos explorar uma ideia?` : 'Seu próximo aprendizado começa aqui.'}</p>
+        {session && <Button className="border border-border bg-card text-foreground" disabled={busy} onClick={() => void logout()}>Sair da conta</Button>}
+      </div>
+      <section className="relative mb-6 overflow-hidden rounded-3xl border border-primary/25 bg-card p-6 sm:p-10">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-20 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_200px]">
+          <div>
+            <p className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-primary">Inteligência que acompanha sua curiosidade</p>
+            <h1 className="max-w-2xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">Menos dúvidas.<br /><span className="text-primary">Mais possibilidades.</span></h1>
+            <p className="mt-5 max-w-xl text-sm leading-relaxed text-muted sm:text-base">Seu espaço para investigar assuntos, organizar pesquisas e entender cada etapa de uma questão. Estudar é mais do que encontrar uma resposta.</p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a href="#assistente" className="inline-flex min-h-12 items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-bold text-background transition-colors hover:bg-primary/90">Abrir assistente <span aria-hidden="true" className="ml-4">↗</span></a>
+              <a href="/pesquisas" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-border bg-background/50 px-5 py-3 text-sm font-medium transition-colors hover:border-primary/50">Planejar uma pesquisa</a>
+            </div>
+          </div>
+          <div aria-hidden="true" className="hidden aspect-square items-center justify-center rounded-full border border-primary/20 bg-background/40 p-5 lg:flex"><div className="flex h-full w-full flex-col items-center justify-center rounded-full border border-dashed border-primary/40"><span className="font-mono text-5xl font-black text-primary">W.</span><span className="mt-3 font-mono text-[9px] tracking-[0.25em] text-muted">STUDY CORE</span></div></div>
+        </div>
       </section>
-      {!supabase ? <div role="alert" className="rounded-2xl border border-border bg-card p-6 leading-relaxed"><h2 className="mb-2 text-lg font-semibold text-foreground">A análise por IA ainda precisa ser ativada</h2><p className="text-muted">A conexão usada pelo login e pelo serviço de análise ainda não está configurada. Para receber respostas, é necessário configurar essa conexão e publicar o serviço de IA com o endereço, a chave e o modelo do provedor. Nenhuma pergunta foi enviada.</p></div> : loading ? <p role="status" className="rounded-2xl bg-card p-6 text-muted">Carregando sua sessão…</p> : !session ? (
+      <section aria-label="Estado do espaço de estudo" className="mb-8 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-border bg-card/90 p-4"><p className="font-mono text-[10px] uppercase tracking-widest text-muted">Conta</p><p className="mt-2 text-sm font-semibold">{loading ? 'Verificando sessão…' : session ? 'Sessão autenticada' : 'Sem sessão iniciada'}</p></div>
+        <div className="rounded-2xl border border-border bg-card/90 p-4"><p className="font-mono text-[10px] uppercase tracking-widest text-muted">Assistente</p><p className="mt-2 text-sm font-semibold">{supabase ? 'Análise por texto' : 'Aguardando ativação'}</p></div>
+        <div className="rounded-2xl border border-border bg-card/90 p-4"><p className="font-mono text-[10px] uppercase tracking-widest text-muted">Utilização diária</p><p className="mt-2 text-sm font-semibold">Contagem ainda indisponível</p></div>
+      </section>
+      <section id="assistente" aria-labelledby="assistant-heading" className="mb-5 scroll-mt-40">
+        <p className="mb-2 font-mono text-xs uppercase tracking-widest text-primary">01 / Assistente de estudos</p>
+        <h2 id="assistant-heading" className="text-2xl font-bold tracking-tight">Entenda o porquê. Não só a resposta.</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted">Inclua o enunciado completo e as alternativas. Anexos e conversas com contexto serão adicionados nas próximas etapas.</p>
+      </section>
+      {!supabase ? <div role="status" className="rounded-2xl border border-border bg-card p-6 leading-relaxed"><h2 className="mb-2 text-lg font-semibold text-foreground">O assistente ainda não está ativo</h2><p className="text-sm text-muted">Login e respostas por IA dependem da ativação dos serviços da plataforma. Enquanto isso, você já pode organizar suas pesquisas e personalizar seu espaço. Nenhuma pergunta é enviada enquanto o serviço não está configurado.</p>{question && <div className="mt-4"><p className="mb-2 text-sm font-semibold text-primary">Seu rascunho de pesquisa está nesta aba</p><textarea aria-label="Rascunho de pesquisa" readOnly value={question} className={`${fieldClass} min-h-48 text-sm`} /></div>}<a href="/pesquisas" className="mt-4 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline underline-offset-4">Abrir planejador de pesquisas</a></div> : loading ? <p role="status" className="rounded-2xl bg-card p-6 text-muted">Carregando sua sessão…</p> : !session ? (
         <form onSubmit={authenticate} className="mx-auto w-full max-w-md space-y-5 rounded-2xl border border-border bg-card p-6 sm:p-8">
           <h2 className="text-2xl font-semibold">{signup ? 'Crie sua conta' : 'Entre para estudar'}</h2>
           {signup && <label className="block space-y-2 text-sm"><span>Nome</span><input className={fieldClass} autoComplete="name" required maxLength={120} value={name} onChange={e => setName(e.target.value)} /></label>}
@@ -177,7 +199,6 @@ function StudyPage() {
       {message && <div role="alert" className="mt-6 break-words rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-sm leading-relaxed text-amber-100">{message}</div>}
       {result && <section aria-live="polite" className="mt-8 rounded-2xl border border-border bg-card p-5 sm:p-7"><h2 className="mb-5 text-xl font-semibold text-primary">Explicação</h2><div className="whitespace-pre-wrap break-words leading-relaxed">{result.answer}</div><p className="mt-6 border-t border-border pt-4 text-sm text-muted">{result.saved ? 'Análise salva na sua conta.' : result.warning || 'Resposta recebida, mas não foi possível salvar a análise.'}</p></section>}
       {session && <ExitShortcutSettings />}
-      <footer className="mt-auto pt-12 text-center text-xs leading-relaxed text-muted">A IA pode cometer erros. Revise as respostas antes de utilizá-las.</footer>
-    </main>
+    </PlatformLayout>
   );
 }

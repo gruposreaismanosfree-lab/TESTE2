@@ -3,12 +3,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#090f1e',
-        foreground: '#edf2fc',
-        card: '#131d30',
-        muted: '#a6b4cc',
-        border: '#2b3a54',
-        primary: '#67e8c3',
+        background: '#0b0a10',
+        foreground: '#f4f1fa',
+        card: '#15121e',
+        muted: '#aaa4bb',
+        border: '#30283e',
+        primary: 'rgb(var(--ws-accent, 245 112 209) / <alpha-value>)',
       },
     },
   },
